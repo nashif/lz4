@@ -30,32 +30,34 @@
 #  - LZ4 forum froup : https://groups.google.com/forum/#!forum/lz4c
 # ################################################################
 
-TARGET_OS ?= $(shell uname)
+UNAME ?= uname
+
+TARGET_OS ?= $(shell $(UNAME))
 ifeq ($(TARGET_OS),)
   TARGET_OS ?= $(OS)
 endif
 
 ifneq (,$(filter Windows%,$(TARGET_OS)))
-LIBLZ4 = liblz4-$(LIBVER_MAJOR)
-LIBLZ4_EXP = liblz4.lib
-WINBASED   = yes
+LIBLZ4_NAME = liblz4-$(LIBVER_MAJOR)
+LIBLZ4_EXP  = liblz4.lib
+WINBASED    = yes
 else
-LIBLZ4_EXP = liblz4.dll.a
+LIBLZ4_EXP  = liblz4.dll.a
   ifneq (,$(filter MINGW%,$(TARGET_OS)))
-LIBLZ4     = liblz4
-WINBASED   = yes
+LIBLZ4_NAME = liblz4
+WINBASED    = yes
   else
     ifneq (,$(filter MSYS%,$(TARGET_OS)))
-LIBLZ4     = msys-lz4-$(LIBVER_MAJOR)
-WINBASED   = yes
+LIBLZ4_NAME = msys-lz4-$(LIBVER_MAJOR)
+WINBASED    = yes
     else
       ifneq (,$(filter CYGWIN%,$(TARGET_OS)))
-LIBLZ4     = cyglz4-$(LIBVER_MAJOR)
-WINBASED   = yes
+LIBLZ4_NAME = cyglz4-$(LIBVER_MAJOR)
+WINBASED    = yes
       else
-LIBLZ4     = liblz4.$(SHARED_EXT_VER)
-WINBASED   = no
-EXT        =
+LIBLZ4_NAME = liblz4
+WINBASED    = no
+EXT         =
       endif
     endif
   endif
@@ -63,11 +65,13 @@ endif
 
 ifeq ($(WINBASED),yes)
 EXT        = .exe
-WINDRES    = windres
+WINDRES ?= windres
 endif
 
+LIBLZ4      = $(LIBLZ4_NAME).$(SHARED_EXT_VER)
+
 #determine if dev/nul based on host environment
-ifneq (,$(filter MINGW% MSYS% CYGWIN%,$(shell uname)))
+ifneq (,$(filter MINGW% MSYS% CYGWIN%,$(shell $(UNAME))))
 VOID := /dev/null
 else
   ifneq (,$(filter Windows%,$(OS)))
@@ -77,17 +81,17 @@ VOID  := /dev/null
   endif
 endif
 
-ifneq (,$(filter Linux Darwin GNU/kFreeBSD GNU OpenBSD FreeBSD NetBSD DragonFly SunOS Haiku MidnightBSD MINGW% CYGWIN% MSYS%,$(shell uname)))
+ifneq (,$(filter Linux Darwin GNU/kFreeBSD GNU OpenBSD FreeBSD NetBSD DragonFly SunOS Haiku MidnightBSD MINGW% CYGWIN% MSYS%,$(shell $(UNAME))))
 POSIX_ENV = Yes
 else
 POSIX_ENV = No
 endif
 
-# Avoid symlinks when targetting Windows or building on a Windows host
+# Avoid symlinks when targeting Windows or building on a Windows host
 ifeq ($(WINBASED),yes)
 LN_SF = cp -p
 else
-  ifneq (,$(filter MINGW% MSYS% CYGWIN%,$(shell uname)))
+  ifneq (,$(filter MINGW% MSYS% CYGWIN%,$(shell $(UNAME))))
 LN_SF = cp -p
   else
     ifneq (,$(filter Windows%,$(OS)))
@@ -98,7 +102,7 @@ LN_SF  = ln -sf
   endif
 endif
 
-ifneq (,$(filter $(shell uname),SunOS))
+ifneq (,$(filter $(shell $(UNAME)),SunOS))
 INSTALL ?= ginstall
 else
 INSTALL ?= install
@@ -106,4 +110,4 @@ endif
 
 INSTALL_PROGRAM ?= $(INSTALL) -m 755
 INSTALL_DATA    ?= $(INSTALL) -m 644
-INSTALL_DIR     ?= $(INSTALL) -d -m 755
+MAKE_DIR        ?= $(INSTALL) -d -m 755
